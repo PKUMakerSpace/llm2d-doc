@@ -3,7 +3,7 @@ import os
 class Config:
     ''' LLM配置 '''
     LLM_API_URL = "https://api.deepseek.com/v1/chat/completions"
-    LLM_API_KEY = ""    # 填写你的 LLM API 密钥
+    LLM_API_KEY = ""    # 填写你的 LLM API 密钥，这里用deepseek，别的还没测试过
     LLM_MODEL = "deepseek-chat"
     
     ''' 向量模型配置 '''
