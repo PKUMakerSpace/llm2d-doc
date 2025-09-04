@@ -18,9 +18,18 @@ import json
 import re
 
 class LLMService:
-    def __init__(self, api_key: str, api_url: str):
+    def __init__(self, api_key: str, api_url: str, model: str = "deepseek-chat"):
+        """
+        初始化 LLM 服务
+        
+        Args:
+            api_key (str): API 访问密钥
+            api_url (str): API 端点 URL
+            model (str): 模型名称，默认为 "deepseek-chat"
+        """
         self.api_key = api_key
         self.api_url = api_url
+        self.model = model
     
         
     async def generate_response(
@@ -43,7 +52,7 @@ class LLMService:
                     response = await client.post(
                         self.api_url,
                         json={
-                            "model": "deepseek-chat",
+                            "model": self.model,
                             "messages": [
                                 {"role": "user", "content": message}
                             ],

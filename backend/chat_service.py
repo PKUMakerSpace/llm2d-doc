@@ -7,8 +7,12 @@ from conversation import ConversationHistory
 
 class ChatService:
     def __init__(self):
-        # 初始化LLM服务
-        self.llm_service = LLMService(Config.LLM_API_KEY, Config.LLM_API_URL)
+        # 初始化LLM服务，从配置中获取参数
+        self.llm_service = LLMService(
+            Config.LLM_API_KEY, 
+            Config.LLM_API_URL,
+            Config.LLM_MODEL  # 传递模型名称
+        )
         
         # 只在启用TTS时初始化TTS服务
         self.tts_service = TTSService(Config.FISH_API_KEY, Config.FISH_REFERENCE_ID) if Config.is_tts_enabled() else None
