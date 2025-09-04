@@ -1,3 +1,17 @@
+# main.py
+# 
+# 项目的主要入口文件，提供后端API服务
+# 
+# 主要功能包括：
+# 1. 提供聊天接口 (/api/chat) - 处理用户聊天请求，生成回复和语音
+# 2. 提供文档上传接口 (/api/upload) - 接收并处理用户上传的文档文件，
+#    支持PDF、Word文档等格式，自动生成内容总结和语音播报
+# 3. 集成TTS（文本转语音）服务，为聊天回复和文档总结生成语音片段
+# 4. 支持按句子分割文本并生成对应的语音片段
+# 5. 处理跨域请求，使前端能够正常访问后端API
+# 
+# 使用FastAPI框架构建RESTful API，通过CORS中间件解决跨域问题
+# 集成了聊天服务(ChatService)和语音合成服务(TTSService)
 from fastapi import FastAPI, UploadFile, File
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse

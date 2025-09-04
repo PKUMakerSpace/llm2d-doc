@@ -39,6 +39,21 @@ class LLMService:
         max_retries: int = 3,
         is_json: bool = False
     ) -> str:
+        """
+        异步生成响应。
+
+        Args:
+            message (str): 用户输入的消息。
+            temperature (float, optional): 温度参数，控制生成文本的随机性。默认为0.7。
+            max_retries (int, optional): 最大重试次数。默认为3。
+            is_json (bool, optional): 是否返回JSON格式的响应。默认为False。
+
+        Returns:
+            str: 生成的响应文本。
+
+        Raises:
+            Exception: 如果在重试次数内未能成功生成响应，则抛出异常。
+        """
         retry_count = 0
         
         while retry_count < max_retries:
