@@ -6,7 +6,7 @@ class Config:
     # LLM_API_KEY = ""    # 填写你的 LLM API 密钥，这里用deepseek，别的还没测试过
     # LLM_MODEL = "deepseek-chat"
     
-    ''' LLM配置 ,阿里云示例，但是测试没成功，怀疑是dashscope格式问题 ''' 
+    ''' LLM配置 ,阿里云示例，测试成功，dashscope格式已支持 ''' 
     LLM_API_URL = "https://dashscope.aliyuncs.com/api/v1/services/aigc/text-generation/generation"
     LLM_API_KEY = os.getenv("DASHSCOPE_API_KEY")
     LLM_MODEL = "qwen-plus"  # 新增LLM模型配置
