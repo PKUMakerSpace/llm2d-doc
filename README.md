@@ -88,7 +88,7 @@ uvicorn main:app --reload --host 0.0.0.0 --port 8000
 
 ## 使用说明
 
-- 角色设定保存在backend/prompts/reply.txt文件夹中，可以自行修改
+- 角色设定保存在[backend/prompts/reply.txt](backend/prompts/reply.txt)文件夹中，这是最为关键的提示词，可以自行修改。backend/prompts/文件夹下还放了一些人设txt文件，要使用时就把内容粘贴到reply.txt中。
 
 ### 前后端技术文档
 - 前端技术文档见 [./frontend/README_frontend_cn.md](frontend/README_frontend_cn.md)

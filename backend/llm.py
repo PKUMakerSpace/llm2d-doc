@@ -8,7 +8,7 @@ LLMService 模块
 3. 实现重试机制以提高请求的稳定性
 4. 支持解析 JSON 格式的响应内容
 
-当前实现主要针对 DeepSeek API，但也适用于其他兼容 OpenAI 格式的 API。
+支持多种风格的 LLM API，包括 OpenAI 风格和 DashScope 风格。
 """
 
 import httpx
@@ -16,6 +16,31 @@ import asyncio
 from typing import List, Dict
 import json
 import re
+
+# 模型风格分类
+MODEL_STYLE_OPENAI = ["deepseek-chat", "gpt-3.5-turbo", "gpt-4", "gpt-4-turbo", "gpt-4o"]
+MODEL_STYLE_DASHSCOPE = ["qwen-plus", "qwen-max", "qwen-turbo", "qwen-vl-plus", "qwen-vl-max"]
+
+def get_model_style(model: str) -> str:
+    """
+    根据模型名称获取模型风格
+    
+    Args:
+        model (str): 模型名称
+        
+    Returns:
+        str: 模型风格 ("openai" 或 "dashscope")
+        
+    Raises:
+        ValueError: 不支持的模型
+    """
+    if model in MODEL_STYLE_OPENAI:
+        return "openai"
+    elif model in MODEL_STYLE_DASHSCOPE:
+        return "dashscope"
+    else:
+        # 默认使用 OpenAI 风格
+        return "openai"
 
 class LLMService:
     def __init__(self, api_key: str, api_url: str, model: str = "deepseek-chat"):
@@ -30,7 +55,65 @@ class LLMService:
         self.api_key = api_key
         self.api_url = api_url
         self.model = model
+        self.model_style = get_model_style(model)
     
+    def _build_openai_request(self, message: str, temperature: float) -> dict:
+        """构建 OpenAI 风格的请求体"""
+        return {
+            "model": self.model,
+            "messages": [
+                {"role": "user", "content": message}
+            ],
+            "temperature": temperature
+        }
+    
+    def _build_dashscope_request(self, message: str, temperature: float) -> dict:
+        """构建 DashScope 风格的请求体"""
+        return {
+            "model": self.model,
+            "input": {
+                "messages": [
+                    {"role": "user", "content": message}
+                ]
+            },
+            "parameters": {
+                "temperature": temperature
+            }
+        }
+    
+    def _build_request(self, message: str, temperature: float) -> dict:
+        """根据模型风格构建请求体"""
+        if self.model_style == "openai":
+            return self._build_openai_request(message, temperature)
+        elif self.model_style == "dashscope":
+            return self._build_dashscope_request(message, temperature)
+        else:
+            # 默认使用 OpenAI 风格
+            return self._build_openai_request(message, temperature)
+    
+    def _parse_openai_response(self, response: dict) -> str:
+        """解析 OpenAI 风格的响应"""
+        if "choices" in response and len(response["choices"]) > 0:
+            return response["choices"][0]["message"]["content"].strip()
+        else:
+            raise ValueError(f"Unexpected response structure: {response}")
+    
+    def _parse_dashscope_response(self, response: dict) -> str:
+        """解析 DashScope 风格的响应"""
+        if "output" in response and "text" in response["output"]:
+            return response["output"]["text"].strip()
+        else:
+            raise ValueError(f"Unexpected response structure: {response}")
+    
+    def _parse_response(self, response: dict) -> str:
+        """根据模型风格解析响应"""
+        if self.model_style == "openai":
+            return self._parse_openai_response(response)
+        elif self.model_style == "dashscope":
+            return self._parse_dashscope_response(response)
+        else:
+            # 默认使用 OpenAI 风格
+            return self._parse_openai_response(response)
         
     async def generate_response(
         self, 
@@ -64,15 +147,12 @@ class LLMService:
                         "Content-Type": "application/json"
                     }
                     
+                    # 根据模型风格构建请求体
+                    request_body = self._build_request(message, temperature)
+                    
                     response = await client.post(
                         self.api_url,
-                        json={
-                            "model": self.model,
-                            "messages": [
-                                {"role": "user", "content": message}
-                            ],
-                            "temperature": temperature
-                        },
+                        json=request_body,
                         headers=headers
                     )
                     
@@ -80,12 +160,12 @@ class LLMService:
                         raise Exception(f"LLM API error: {response.status_code}")
                     
                     result = response.json()
-                    # DeepSeek/OpenAI风格
-                    if "choices" in result and len(result["choices"]) > 0:
-                        raw_response = result["choices"][0]["message"]["content"].strip()
-                    else:
-                        raise ValueError(f"Unexpected response structure: {result}")
-                    print("raw_response:", raw_response)
+                    print("raw_response:", result)
+                    
+                    # 根据模型风格解析响应
+                    raw_response = self._parse_response(result)
+                    print("parsed_response:", raw_response)
+                    
                     if is_json:
                         return self._parse_json_response(raw_response)
                     else:
@@ -96,9 +176,24 @@ class LLMService:
                 print(f"LLM Error (attempt {retry_count}/{max_retries}): {str(e)}")
                 if retry_count < max_retries:
                     await asyncio.sleep(1)
+        
+        # 如果所有重试都失败了，抛出异常
+        raise Exception(f"Failed to get response from LLM after {max_retries} attempts")
 
     @staticmethod
     def _parse_json_response(raw_response: str) -> Dict:
+        """
+        解析 JSON 格式的响应
+        
+        Args:
+            raw_response (str): 原始响应字符串
+            
+        Returns:
+            Dict: 解析后的 JSON 对象
+            
+        Raises:
+            ValueError: 当无法解析 JSON 时抛出异常
+        """
         try:
             return json.loads(raw_response)
         except Exception as e:

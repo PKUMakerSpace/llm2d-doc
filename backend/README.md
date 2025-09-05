@@ -48,6 +48,26 @@
                       |  表情控制            |
                       +----------------------+
 ```
+chat服务中消息message 传递路径
+```mermaid
+graph TD
+    A[前端: 用户输入消息] --> B[HTTP POST /api/chat]
+    B --> C[ChatRequest.message]
+    C --> D["normal_chat_flow(request.message)<br/>[main.py]"]
+    D --> E["ChatService.generate_reply(message)<br/>[chat_service.py]"]
+    E --> F["MainAgent.reply(message)<br/>[main_agent.py]"]
+    F --> G["构建提示词{user_message=message}<br/>[main_agent.py]"]
+    G --> H["LLMService.generate_response(prompt)<br/>[llm.py]"]
+    H --> I["返回AI回复<br/>[main.py]"]
+
+    style D fill:#e1f5fe
+    style E fill:#f3e5f5
+    style F fill:#e8f5e8
+    style G fill:#e8f5e8
+    style H fill:#fff3e0
+    style I fill:#e1f5fe
+```
+
 文档上传与总结架构
 ```
 +------------------+     +-------------------------+
@@ -158,7 +178,7 @@ expression: 爱心
 
 [ChatService](./backend/chat_service.py#L7-L42) 类负责协调整个聊天流程：
 
-- 初始化 LLM 服务和 TTS 服务
+- 初始化 LLM 服务和 TTS 服务，从配置 [config.py](./config.py) 中获取API地址、密钥、模型名等信息
 - 管理对话历史
 - 调用 [MainAgent](./backend/main_agent.py#L6-L97) 生成回复
 - 生成语音数据
@@ -168,19 +188,22 @@ expression: 爱心
 async def generate_reply(self, message: str, session_id: str) -> Tuple[str, Optional[bytes], str]
 ```
 
-### 3. 主代理 (main_agent.py)
+### 3. 主智能体 ([main_agent.py](./main_agent.py))
 
 `MainAgent` 类是核心逻辑处理单元：
 
-- 管理对话历史
-- 加载角色设定提示词
-- 调用 LLM 服务生成回复
-- 记录对话日志
+- 管理对话历史 : 通过 [conversation.py](./conversation.py) 的  [ConversationHistory](./conversation.py#L6-L36) 类 管理对话上下文
+- 提示词构建：加载角色设定提示词，准备包含历史对话的上下文信息，用于输入LLM API
+- 调用 [llm.py](./llm.py) 的 LLM 服务生成回复
+- 记录对话日志到 save 文件夹中
 
 关键方法：
 ```python
 async def reply(self, message: str) -> Tuple[str, str]
-```
+  try:
+              # 使用 MainAgent 生成回复和表情
+              reply, expression = await self.main_agent.reply(message)
+  ```
 
 ### 4. LLM 服务 (llm.py)
 
