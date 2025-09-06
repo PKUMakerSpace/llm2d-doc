@@ -97,6 +97,7 @@ uvicorn main:app --reload --host 0.0.0.0 --port 8000
 ### 联系作者
 欢迎在github仓库页面提issue. 可以给作者发邮件，邮箱: 1074038570@qq.com .
 
+
 ### 特别感谢
 本项目从项目https://github.com/mewamew/nana 魔改而来，删掉了原项目中的embedding做法，就让ai用一句话'user_info'记下用户信息，提升了项目的可靠性。
 live2d模型是原作者在工坊买的，仅供学习交流使用，请勿用于商业用途！！！
