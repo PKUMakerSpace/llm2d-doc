@@ -24,7 +24,7 @@ Currently, two official plugins are available:
 
 ## 项目结构
 
-前端项目位于 `Geek-agent-live2D-main/frontend` 目录下，主要结构包括：
+当前前端项目位于 `Geek-agent-live2D-main/frontend` 目录下，主要结构包括：
 
 - `public/` - 静态资源目录
   - `libs/` - 第三方库文件
@@ -39,6 +39,29 @@ Currently, two official plugins are available:
 - [index.html](./index.html) - HTML模板文件
 - [package.json](./node_modules/@babel/core/package.json) - 项目依赖和脚本配置
 - [vite.config.js](./vite.config.js) - Vite构建配置
+
+## 项目结构优化方法
+一个好的前端应该包含以下文件夹
+- `public/` - 静态资源目录
+  - `libs/` - 第三方库文件
+  - `models/` - Live2D模型文件
+  - `runtime/` - 运行时相关文件
+- `src/` - 源代码目录
+  - `components/` 
+    - `Webpage/` - 网页组件
+    - [Live2DModel.jsx](./components/Live2DModel.jsx) - Live2D交互组件
+    - LoadingDots - 加载中动画
+  - `pages/` - 页面组件
+    - `Webpage.jsx` - 主页组件
+  - [App.css](./src/App.css) - 主应用样式
+  - [App.jsx](./src/App.jsx) - 主应用组件
+  - [index.css](./src/index.css) - 全局样式
+  - [main.jsx](./src/main.jsx) - 应用入口文件
+- [index.html](./index.html) - HTML模板文件
+- [package.json](./node_modules/@babel/core/package.json) - 项目依赖和脚本配置
+- [vite.config.js](./vite.config.js) - Vite构建配置
+
+组织逻辑是
 
 ## 核心依赖
 

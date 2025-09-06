@@ -28,11 +28,11 @@ const Live2DDisplay = forwardRef((props, ref) => {
   }
 
   // 新增：随机表情方法
-  const randomExpression = () => {
-    const expressions = Object.keys(EXPRESSIONS)
-    const randomIndex = Math.floor(Math.random() * expressions.length)
-    return expressions[randomIndex]
-  }
+  // const randomExpression = () => {
+  //   const expressions = Object.keys(EXPRESSIONS)
+  //   const randomIndex = Math.floor(Math.random() * expressions.length)
+  //   return expressions[randomIndex]
+  // }
 
   // 暴露方法给父组件
   useImperativeHandle(ref, () => ({
@@ -152,5 +152,6 @@ const Live2DDisplay = forwardRef((props, ref) => {
 
   return <div ref={pixiContainerRef} className="live2d-container"></div>
 })
-
+// 添加这行给组件命名
+Live2DDisplay.displayName = 'Live2DDisplay'
 export default Live2DDisplay 
