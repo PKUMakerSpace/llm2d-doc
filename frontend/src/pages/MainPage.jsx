@@ -3,6 +3,7 @@ import { useState, useRef } from 'react';
 import Live2DController from '../components/Live2D/Live2DController';
 import MessageList from '../components/Chat/MessageList';
 import InputArea from '../components/Chat/InputArea';
+import Sidebar from '../components/Sidebar';
 import '../App.css';
 import LoadingDots from '../components/LoadingDots';
 
@@ -10,6 +11,7 @@ export default function MainPage() {
   const [input, setInput] = useState('');
   const [messages, setMessages] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
   const fileInputRef = useRef();
   const [subtitleSentences, setSubtitleSentences] = useState([]);
   const [subtitleIndex, setSubtitleIndex] = useState(0);
@@ -18,9 +20,38 @@ export default function MainPage() {
   const live2dControllerRef = useRef(null);
 
   // 拆分为句子数组
-    const splitSentences = (text) => {
-      return text.split(/(?<=[。！？?!])/).filter(s => s.trim().length > 0);
-    };
+  const splitSentences = (text) => {
+    return text.split(/(?<=[。！？?!])/).filter(s => s.trim().length > 0);
+  };
+
+  // 解析可能包含在代码块中的JSON
+  const parseJsonResponse = (content) => {
+    try {
+      // 首先尝试直接解析
+      return JSON.parse(content);
+    } catch (e) {
+      // 如果直接解析失败，尝试提取代码块中的JSON
+      const jsonMatch = content.match(/```json\s*({.*?})\s*```/s);
+      if (jsonMatch) {
+        try {
+          return JSON.parse(jsonMatch[1]);
+        } catch (e2) {
+          console.error('Failed to parse JSON from code block:', e2);
+        }
+      }
+      // 如果还失败，尝试直接查找大括号内的内容
+      const braceMatch = content.match(/{.*}/s);
+      if (braceMatch) {
+        try {
+          return JSON.parse(braceMatch[0]);
+        } catch (e3) {
+          console.error('Failed to parse JSON from braces:', e3);
+        }
+      }
+      // 如果都失败了，返回null表示解析失败
+      return null;
+    }
+  };
 
   // 播放每一句语音并切换字幕
   const playSentences = async (sentences, audioBase64, audioSegments = null) => {
@@ -135,7 +166,7 @@ export default function MainPage() {
     }, 1000);
   };
 
- /**
+  /**
    * 处理用户发送消息的函数
    * 
    * @param {string} message - 用户发送的消息内容
@@ -170,29 +201,48 @@ export default function MainPage() {
       
       const data = await response.json();
       
+      // 解析可能包含在代码块中的JSON响应
+      let parsedData = data;
+      if (data.message) {
+        const parsedMessage = parseJsonResponse(data.message);
+        if (parsedMessage && typeof parsedMessage === 'object') {
+          parsedData = {
+            ...data,
+            message: parsedMessage.reply || data.message,
+            expression: parsedMessage.expression || data.expression
+          };
+          
+          // 如果有user_info字段，也可以处理
+          if (parsedMessage.user_info) {
+            // 这里可以处理用户信息更新逻辑
+            console.log('User info updated:', parsedMessage.user_info);
+          }
+        }
+      }
+      
       // 设置表情
-      if (data.expression && live2dControllerRef.current) {
-        live2dControllerRef.current.showExpression(data.expression);
+      if (parsedData.expression && live2dControllerRef.current) {
+        live2dControllerRef.current.showExpression(parsedData.expression);
       }
       
       // Instead of directly playing audio, use the subtitle system
       // Split response into sentences for subtitle display
-      const sentences = splitSentences(data.message);
+      const sentences = splitSentences(parsedData.message);
       
       // Update messages first
       setMessages([
         ...messages,
         { type: 'user', content: message },
-        { type: 'assistant', content: data.message }
+        { type: 'assistant', content: parsedData.message }
       ]);
       
       // Play sentences with audio through subtitle system
-      if (data.audio_segments && data.sentences) {
+      if (parsedData.audio_segments && parsedData.sentences) {
         // New format with separate audio segments
-        await playSentences(data.sentences, null, data.audio_segments);
-      } else if (data.audio && data.audio.length > 0) {
+        await playSentences(parsedData.sentences, null, parsedData.audio_segments);
+      } else if (parsedData.audio && parsedData.audio.length > 0) {
         // Old format with single audio file
-        await playSentences(sentences, data.audio);
+        await playSentences(sentences, parsedData.audio);
       } else {
         // No audio, just display subtitles
         setSubtitleSentences(sentences);
@@ -233,23 +283,35 @@ export default function MainPage() {
       });
       const data = await response.json();
       
+      // 解析可能包含在代码块中的JSON响应
+      let parsedData = data;
+      if (data.summary) {
+        const parsedSummary = parseJsonResponse(data.summary);
+        if (parsedSummary && typeof parsedSummary === 'object' && parsedSummary.reply) {
+          parsedData = {
+            ...data,
+            summary: parsedSummary.reply
+          };
+        }
+      }
+      
       // Update messages first
       setMessages([
         ...messages,
         { type: 'user', content: '上传文档并请求总结' },
-        { type: 'assistant', content: data.summary }
+        { type: 'assistant', content: parsedData.summary }
       ]);
       
       // Split summary into sentences
-      const sentences = splitSentences(data.summary);
+      const sentences = splitSentences(parsedData.summary);
       
       // Play sentences with audio through subtitle system
-      if (data.audio_segments && data.sentences) {
+      if (parsedData.audio_segments && parsedData.sentences) {
         // New format with separate audio segments
-        await playSentences(data.sentences, null, data.audio_segments);
-      } else if (data.audio && data.audio.length > 0) {
+        await playSentences(parsedData.sentences, null, parsedData.audio_segments);
+      } else if (parsedData.audio && parsedData.audio.length > 0) {
         // Old format with single audio file
-        await playSentences(sentences, data.audio);
+        await playSentences(sentences, parsedData.audio);
       } else {
         // No audio, just display subtitles
         setSubtitleSentences(sentences);
@@ -303,6 +365,14 @@ export default function MainPage() {
         </div>
       </div>
 
+      {/* 侧边栏按钮 */}
+      <button 
+        className="sidebar-toggle-btn"
+        onClick={() => setSidebarOpen(true)}
+      >
+        ☰ 聊天记录
+      </button>
+
       <MessageList messages={messages} />
       <InputArea 
         input={input}
@@ -311,6 +381,12 @@ export default function MainPage() {
         fileInputRef={fileInputRef}
         onFileUpload={handleUpload}
         disabled={loading}
+      />
+
+      <Sidebar 
+        isOpen={sidebarOpen}
+        onClose={() => setSidebarOpen(false)}
+        messages={messages}
       />
     </div>
   );
