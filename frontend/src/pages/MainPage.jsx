@@ -1,6 +1,6 @@
 // frontend/src/pages/MainPage.jsx
 import { useState, useRef, useEffect } from 'react'
-import Live2DDisplay from '../components/Live2DModel'
+import Live2DDisplay from '../components/Live2D/Live2DModel'
 import '../App.css'
 import LoadingDots from '../components/LoadingDots'
 
