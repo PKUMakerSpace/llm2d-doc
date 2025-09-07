@@ -115,27 +115,26 @@ class LLMService:
             # 默认使用 OpenAI 风格
             return self._parse_openai_response(response)
         
+    from typing import Union  # 添加导入
+    
     async def generate_response(
         self, 
         message: str,
         temperature: float = 0.7,
         max_retries: int = 3,
         is_json: bool = False
-    ) -> str:
+    ) -> Union[str, Dict]:
         """
         异步生成响应。
-
+    
         Args:
             message (str): 用户输入的消息。
             temperature (float, optional): 温度参数，控制生成文本的随机性。默认为0.7。
             max_retries (int, optional): 最大重试次数。默认为3。
             is_json (bool, optional): 是否返回JSON格式的响应。默认为False。
-
+    
         Returns:
-            str: 生成的响应文本。
-
-        Raises:
-            Exception: 如果在重试次数内未能成功生成响应，则抛出异常。
+            Union[str, Dict]: 生成的响应文本或解析后的JSON对象。
         """
         retry_count = 0
         
@@ -147,7 +146,6 @@ class LLMService:
                         "Content-Type": "application/json"
                     }
                     
-                    # 根据模型风格构建请求体
                     request_body = self._build_request(message, temperature)
                     
                     response = await client.post(
@@ -162,14 +160,13 @@ class LLMService:
                     result = response.json()
                     print("raw_response:", result)
                     
-                    # 根据模型风格解析响应
                     raw_response = self._parse_response(result)
                     print("parsed_response:", raw_response)
                     
                     if is_json:
-                        return self._parse_json_response(raw_response)
+                        return self._parse_json_response(raw_response)  # 返回 Dict
                     else:
-                        return raw_response
+                        return raw_response  # 返回 str
                         
             except Exception as e:
                 retry_count += 1
@@ -177,13 +174,12 @@ class LLMService:
                 if retry_count < max_retries:
                     await asyncio.sleep(1)
         
-        # 如果所有重试都失败了，抛出异常
         raise Exception(f"Failed to get response from LLM after {max_retries} attempts")
 
     @staticmethod
     def _parse_json_response(raw_response: str) -> Dict:
         """
-        解析 JSON 格式的响应
+        解析 JSON 格式的响应，支持带代码块标记的 JSON
         
         Args:
             raw_response (str): 原始响应字符串
@@ -195,6 +191,20 @@ class LLMService:
             ValueError: 当无法解析 JSON 时抛出异常
         """
         try:
-            return json.loads(raw_response)
+            # 移除可能存在的 Markdown 代码块标记
+            cleaned_response = raw_response.strip()
+            if cleaned_response.startswith("```json"):
+                # 提取代码块中的内容
+                match = re.search(r"```json\s*(.*?)\s*```", cleaned_response, re.DOTALL)
+                if match:
+                    cleaned_response = match.group(1)
+            elif cleaned_response.startswith("```"):
+                # 处理其他代码块标记
+                match = re.search(r"```\s*(.*?)\s*```", cleaned_response, re.DOTALL)
+                if match:
+                    cleaned_response = match.group(1)
+            
+            # 解析 JSON
+            return json.loads(cleaned_response)
         except Exception as e:
             raise ValueError(f"Failed to parse JSON response: {str(e)}")

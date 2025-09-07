@@ -3,6 +3,14 @@
 import PropTypes from 'prop-types';
 import '../App.css';
 
+/**
+* Sidebar 组件
+*
+* @param isOpen 是否展开侧边栏
+* @param onClose 关闭侧边栏的回调函数
+* @param messages 消息列表
+* @returns JSX.Element 侧边栏组件
+*/
 const Sidebar = ({ isOpen, onClose, messages }) => {
   return (
     <>
