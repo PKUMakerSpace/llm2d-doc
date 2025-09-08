@@ -134,6 +134,12 @@ async def upload(file: UploadFile = File(...)):
     )
     reply = await chat_service.llm_service.generate_response(prompt)
     
+ # 手动将文档总结对话添加到历史记录中
+    chat_service.conversation_history.add_dialog(
+        f"请总结上传的{suffix}文档内容", 
+        reply
+    )
+
     # Split reply into sentences
     sentences = split_sentences(reply)
     
