@@ -176,10 +176,11 @@ class LLMService:
         
         raise Exception(f"Failed to get response from LLM after {max_retries} attempts")
 
+
     @staticmethod
     def _parse_json_response(raw_response: str) -> Dict:
         """
-        解析 JSON 格式的响应，支持带代码块标记的 JSON
+        解析 JSON 格式的响应，支持多种格式和包含思考过程的响应
         
         Args:
             raw_response (str): 原始响应字符串
@@ -191,20 +192,44 @@ class LLMService:
             ValueError: 当无法解析 JSON 时抛出异常
         """
         try:
-            # 移除可能存在的 Markdown 代码块标记
             cleaned_response = raw_response.strip()
-            if cleaned_response.startswith("```json"):
-                # 提取代码块中的内容
-                match = re.search(r"```json\s*(.*?)\s*```", cleaned_response, re.DOTALL)
-                if match:
-                    cleaned_response = match.group(1)
-            elif cleaned_response.startswith("```"):
+            
+            # 处理<think>标签的情况
+            # 移除<think>...</think>部分
+            if "<think>" in cleaned_response and "</think>" in cleaned_response:
+                # 使用正则表达式移除<think>标签及其内容
+                cleaned_response = re.sub(r'<think>.*?</think>', '', cleaned_response, flags=re.DOTALL).strip()
+            
+            # 处理XML风格标签（如果还有其他类似标签）
+            cleaned_response = re.sub(r'<[^>]+>', '', cleaned_response).strip()
+            
+            # 如果有多个JSON对象，尝试找到最后一个完整的JSON
+            if "```json" in cleaned_response:
+                # 提取最后一个代码块中的内容
+                matches = re.findall(r"```json\s*(.*?)\s*```", cleaned_response, re.DOTALL)
+                if matches:
+                    cleaned_response = matches[-1]  # 取最后一个匹配项
+            elif "```" in cleaned_response:
                 # 处理其他代码块标记
-                match = re.search(r"```\s*(.*?)\s*```", cleaned_response, re.DOTALL)
-                if match:
-                    cleaned_response = match.group(1)
+                matches = re.findall(r"```\s*(.*?)\s*```", cleaned_response, re.DOTALL)
+                if matches:
+                    cleaned_response = matches[-1]
+            
+            # 尝试从文本中提取JSON对象
+            # 查找第一个 { 和最后一个 } 之间的内容
+            start = cleaned_response.find('{')
+            end = cleaned_response.rfind('}')
+            if start != -1 and end != -1 and start < end:
+                cleaned_response = cleaned_response[start:end+1]
+            
+            # 如果还是没有找到有效的JSON格式，尝试其他方法
+            if not cleaned_response.startswith('{') or not cleaned_response.endswith('}'):
+                # 尝试找到任何可能的JSON对象
+                json_matches = re.findall(r'\{[^{}]*(?:\{[^{}]*\}[^{}]*)*\}', cleaned_response)
+                if json_matches:
+                    cleaned_response = json_matches[-1]  # 取最后一个匹配的JSON对象
             
             # 解析 JSON
             return json.loads(cleaned_response)
         except Exception as e:
-            raise ValueError(f"Failed to parse JSON response: {str(e)}")
+            raise ValueError(f"Failed to parse JSON response: {str(e)}. Raw response: {raw_response[:200]}...")

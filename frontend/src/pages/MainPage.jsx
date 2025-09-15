@@ -6,6 +6,7 @@ import InputArea from '../components/Chat/InputArea';
 import Sidebar from '../components/Sidebar';
 import '../App.css';
 import LoadingDots from '../components/LoadingDots';
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000';
 
 export default function MainPage() {
   const [input, setInput] = useState('');
@@ -188,7 +189,7 @@ export default function MainPage() {
     if (!message.trim()) return;
     setLoading(true);
     try {
-      const response = await fetch('http://localhost:8000/api/chat', {
+      const response = await fetch(`${API_BASE_URL}/api/chat`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -277,7 +278,7 @@ export default function MainPage() {
     formData.append('file', file);
     setLoading(true);
     try {
-      const response = await fetch('http://localhost:8000/api/upload', {
+      const response = await fetch(`${API_BASE_URL}/api/upload`, {
         method: 'POST',
         body: formData,
       });

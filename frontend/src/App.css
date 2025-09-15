@@ -34,7 +34,7 @@
   z-index: 1;
 }
 
-/* 字幕区域样式 */
+/* 字幕区域样式 - 保持现有样式 */
 .app .live2d-main .subtitles {
   position: fixed;
   left: 50%;
@@ -49,40 +49,72 @@
   display: inline-block;
   color: white;
   padding: 12px 24px;
-  font-size: 48px;
+  font-size: 48px; /* 默认字体大小 */
   font-weight: 600;
   letter-spacing: 0.5px;
   line-height: 1.4;
   white-space: pre-wrap;
   animation: fadeIn 0.3s ease-in-out, bounce 0.5s ease-in-out;
   
-  /* 移除原有的描边和发光效果 */
-  -webkit-text-stroke: none;
-  text-stroke: none;
-  text-shadow: none;
-  
-  /* 添加新的描边效果 */
+  /* 现有样式保持不变 */
   -webkit-text-stroke: 2px #2FA4E7;
-  text-stroke: 2px #2FA4E7;
-  
-  /* 重新设计文字阴影效果，让它更清晰 */
   text-shadow: 
-    /* 内层描边 */
     -1px -1px 0 #4a9dcd,
     1px -1px 0 #2FA4E7,
     -1px 1px 0 #2FA4E7,
     1px 1px 0 #2FA4E7,
-    
-    /* 外层发光效果 */
     0 0 10px rgba(47, 164, 231, 0.8),
     0 0 20px rgba(47, 164, 231, 0.4);
-    
-  /* 减小倾斜角度 */
   transform: skew(-3deg);
-  
-  /* 保持原有的动画效果 */
-  animation: fadeIn 0.3s ease-in-out, bounce 0.5s ease-in-out;
   font-family: "Comic Sans MS", "ZCOOL KuaiLe", "Varela Round", "Rubik", system-ui;
+}
+
+/* 响应式字体大小 */
+/* 针对窄屏幕设备（如手机竖屏） */
+@media (max-width: 480px) {
+  .app .live2d-main .subtitles .subtitle-text {
+    font-size: 28px; /* 较小的字体以适应窄屏幕 */
+  }
+}
+
+/* 针对中等屏幕设备（如平板） */
+@media (min-width: 481px) and (max-width: 768px) {
+  .app .live2d-main .subtitles .subtitle-text {
+    font-size: 36px;
+  }
+}
+
+/* 针对宽屏幕设备（保持当前大小） */
+@media (min-width: 769px) {
+  .app .live2d-main .subtitles .subtitle-text {
+    font-size: 48px;
+  }
+}
+
+/* 加载状态也应用相同的响应式字体 */
+.app .live2d-main .subtitles .subtitle-text.loading {
+  color: #2FA4E7;
+  font-size: 48px; /* 默认大小 */
+  animation: pulse 1.5s ease-in-out infinite;
+}
+
+/* 加载状态的响应式字体 */
+@media (max-width: 480px) {
+  .app .live2d-main .subtitles .subtitle-text.loading {
+    font-size: 28px;
+  }
+}
+
+@media (min-width: 481px) and (max-width: 768px) {
+  .app .live2d-main .subtitles .subtitle-text.loading {
+    font-size: 36px;
+  }
+}
+
+@media (min-width: 769px) {
+  .app .live2d-main .subtitles .subtitle-text.loading {
+    font-size: 48px;
+  }
 }
 
 @keyframes fadeIn {

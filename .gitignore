@@ -47,6 +47,7 @@ Thumbs.db
 frontend/build/
 frontend/dist/
 frontend/node_modules/
+frontend/public/models/
 
 # Backend specific
 backend/node_modules/

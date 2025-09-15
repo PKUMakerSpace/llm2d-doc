@@ -60,7 +60,7 @@ pip install fastapi uvicorn openai python-dotenv PyDocX PyPDF2
 - TTS服务使用了Fish Audio的API，需要注册账号并获取API Key，网址 https://fish.audio/zh-CN/ 。如果不想使用TTS，可以把FISH_API_KEY设置为空字符串，程序会默认不用。有TTS
 
 
-## 运行说明
+## 测试运行说明
 linux 下一键启动：在主目录中运行脚本
 ```bash
 ./run.sh
@@ -85,6 +85,9 @@ uvicorn main:app --reload --host 0.0.0.0 --port 8000
 ```
 后端API将在 http://localhost:8000 启动。后端位置比较关键，因为前端会默认到这里去请求数据。
 
+### 部署说明
+部署脚本 [build.sh](build.sh)
+前后端分别部署在3001和8001端口。
 
 ## 使用说明
 
@@ -93,6 +96,11 @@ uvicorn main:app --reload --host 0.0.0.0 --port 8000
 ### 前后端技术文档
 - 前端技术文档见 [./frontend/README_frontend_cn.md](frontend/README_frontend_cn.md)
 - 后端技术文档见 [./backend/README.md](backend/README.md)
+
+### 最近的更改
+前端默认开启鼠标追踪功能
+前端新增字体适配
+新增项目构建方法 build.sh
 
 ### 联系作者
 欢迎在github仓库页面提issue. 可以给作者发邮件，邮箱: 1074038570@qq.com .
