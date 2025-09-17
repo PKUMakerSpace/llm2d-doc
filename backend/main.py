@@ -55,11 +55,22 @@ def split_sentences(text):
 
 @app.post("/api/chat")
 async def chat(request: ChatRequest):
-    # 处理聊天请求
+    # 处理聊天请求，目前直接套用normal_chat_flow
     return await normal_chat_flow(request)
 
 # 聊天流程处理函数
 async def normal_chat_flow(request: ChatRequest):
+    """
+    正常的聊天流程处理函数。首先通过chat_service.generate_reply处理传入的message，返回reply文字内容,audio_data语音内容和expression表情内容。
+    然后将reply按句子分割，并为每个句子生成对应的语音片段。
+
+    Args:
+    request (ChatRequest): 包含聊天请求信息的对象，包括request.message和request.session_id。
+
+    Returns:
+    JSONResponse: 包含聊天回复信息的JSON响应对象。
+
+    """
     # 调用聊天服务生成回复、语音数据和表情
     reply, audio_data, expression = await chat_service.generate_reply(
         request.message, 
