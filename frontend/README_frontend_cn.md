@@ -59,7 +59,17 @@ Currently, two official plugins are available:
 - [App.jsx](./src/App.jsx)：根组件
 - [MainPage.jsx](./src/pages/MainPage.jsx)：具体功能页面
 
-
+视觉层级关系
+```
+.app (黑色背景, 相对定位)
+  ↓
+  .live2d-main (绝对定位, 覆盖整个.app)
+    ↓
+    .live2d-container (PIXI画布容器, z-index: 1)
+    .subtitles (字幕区域, z-index: 1000)
+  ↓
+  其他组件 (MessageList, InputArea等)
+```
 
 ## 主要功能
 

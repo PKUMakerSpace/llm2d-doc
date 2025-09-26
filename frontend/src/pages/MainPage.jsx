@@ -90,11 +90,11 @@ export default function MainPage() {
           } catch (audioError) {
             console.error('Audio processing error:', audioError);
             // Wait for a default time if audio fails
-            await new Promise(resolve => setTimeout(resolve, 2000));
+            await new Promise(resolve => setTimeout(resolve, 3000));
           }
         } else {
           // If no audio for this sentence, wait for a default time
-          await new Promise(resolve => setTimeout(resolve, 2000));
+          await new Promise(resolve => setTimeout(resolve, 3000));
         }
       }
     } else if (audioBase64 && audioBase64.length > 0) {
@@ -123,7 +123,7 @@ export default function MainPage() {
         for (let i = 0; i < sentences.length; i++) {
           intervals.push(setTimeout(() => {
             setSubtitleIndex(i);
-          }, i * timePerSentence * 1000));
+          }, i * timePerSentence * 4000));
         }
         
         // Wait for audio to finish
@@ -144,14 +144,14 @@ export default function MainPage() {
         // Fallback to sequential display if audio fails
         for (let i = 0; i < sentences.length; i++) {
           setSubtitleIndex(i);
-          await new Promise(resolve => setTimeout(resolve, 2000));
+          await new Promise(resolve => setTimeout(resolve, 4000));
         }
       }
     } else {
       // If no audio at all, just display subtitles sequentially
       for (let i = 0; i < sentences.length; i++) {
         setSubtitleIndex(i);
-        await new Promise(resolve => setTimeout(resolve, 2000));
+        await new Promise(resolve => setTimeout(resolve, 4000));
       }
     }
     
@@ -164,11 +164,10 @@ export default function MainPage() {
       if (live2dControllerRef.current) {
         live2dControllerRef.current.resetExpression();
       }
-    }, 1000);
+    }, 4000);
   };
 
-  /**
-   * 处理用户发送消息的函数
+  /**处理用户发送消息的函数
    * 
    * @param {string} message - 用户发送的消息内容
    * 
@@ -251,7 +250,7 @@ export default function MainPage() {
         // Simulate timing for subtitle display without audio
         for (let i = 0; i < sentences.length; i++) {
           setSubtitleIndex(i);
-          await new Promise(resolve => setTimeout(resolve, 2000));
+          await new Promise(resolve => setTimeout(resolve, 4000));
         }
         // Clear subtitles after completion
         setTimeout(() => {
@@ -262,7 +261,7 @@ export default function MainPage() {
           if (live2dControllerRef.current) {
             live2dControllerRef.current.resetExpression();
           }
-        }, 1000);
+        }, 4000);
       }
     } catch (error) {
       console.error('Error:', error);
@@ -320,7 +319,7 @@ export default function MainPage() {
         // Simulate timing for subtitle display without audio
         for (let i = 0; i < sentences.length; i++) {
           setSubtitleIndex(i);
-          await new Promise(resolve => setTimeout(resolve, 2000));
+          await new Promise(resolve => setTimeout(resolve, 4000));
         }
         // Clear subtitles after completion
         setTimeout(() => {
@@ -331,7 +330,7 @@ export default function MainPage() {
           if (live2dControllerRef.current) {
             live2dControllerRef.current.resetExpression();
           }
-        }, 1000);
+        }, 4000);
       }
     } catch (error) {
       console.error('上传失败:', error);
@@ -351,14 +350,17 @@ export default function MainPage() {
         <Live2DController ref={live2dControllerRef} />
         <div className="subtitles">
           {loading && subtitleSentences.length === 0 ? (
+            // 情况1：正在加载，且还没有字幕 → 显示加载动画
             <div className="subtitle-text loading">
               <LoadingDots />
             </div>
           ) : subtitleSentences.length > 0 ? (
+            // 情况2：有字幕句子 → 显示当前句子
             <div className="subtitle-text">
               {subtitleSentences[subtitleIndex]}
             </div>
           ) : lastAssistantMessage && (
+            // 情况3：没有字幕，但有最后一条 AI 消息 → 显示完整消息
             <div className="subtitle-text">
               {lastAssistantMessage.content}
             </div>

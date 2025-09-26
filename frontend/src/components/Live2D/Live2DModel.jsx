@@ -127,7 +127,7 @@ const Live2DDisplay = forwardRef((props, ref) => {
         
         // 设置模型的初始跟踪状态
         model.internalModel.motionManager.settings.autoAddRandomMotion = true
-        model.autoInteract = true  // 初始状态设置为不跟踪
+        model.autoInteract = true  // 初始状态设置为跟踪
         model.draggable = true
         
         const scale = Math.min(

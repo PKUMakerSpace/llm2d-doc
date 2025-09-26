@@ -55,5 +55,6 @@ backend/dist/
 backend/.env 
 backend/save/
 backend/__pycache__
+backend/prompts/private/
 
 .codegpt
