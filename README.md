@@ -50,7 +50,7 @@ python -m venv venv
 source venv/bin/activate
 
 # 安装依赖
-pip install fastapi uvicorn openai python-dotenv PyDocX PyPDF2
+pip install fastapi uvicorn openai python-dotenv python-docx PyPDF2 fish_audio_sdk 
 ```
 
 
