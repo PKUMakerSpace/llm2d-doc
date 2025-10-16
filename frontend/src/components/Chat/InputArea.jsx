@@ -9,7 +9,9 @@ import TTSToggle from '../TTSToggle';
     onSendMessage,
     fileInputRef,
     onFileUpload,
-    disabled 
+    disabled,
+    ttsEnabled,
+    onTtsToggle
   }) => {
     const handleSendMessage = () => {
       if (input.trim() && !disabled) {
@@ -61,7 +63,10 @@ import TTSToggle from '../TTSToggle';
         </button>
         
         {/* TTS开关 */}
-        <TTSToggle />
+        <TTSToggle 
+          ttsEnabled={ttsEnabled}
+          onToggle={onTtsToggle}
+        />
       </div>
     );
   };
@@ -74,6 +79,8 @@ import TTSToggle from '../TTSToggle';
     fileInputRef: PropTypes.object.isRequired,
     onFileUpload: PropTypes.func.isRequired,
     disabled: PropTypes.bool.isRequired,
+    ttsEnabled: PropTypes.bool.isRequired,
+    onTtsToggle: PropTypes.func.isRequired,
   };
   
   export default InputArea;

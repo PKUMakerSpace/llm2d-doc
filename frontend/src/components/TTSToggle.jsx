@@ -1,19 +1,20 @@
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import '../App.css';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000';
 
-const TTSToggle = ({ onToggle }) => {
-  const [ttsEnabled, setTtsEnabled] = useState(true);
+const TTSToggle = ({ ttsEnabled: propTtsEnabled, onToggle }) => {
+  const [localTtsEnabled, setLocalTtsEnabled] = useState(true);
   const [ttsApiKeyValid, setTtsApiKeyValid] = useState(false);
   const [loading, setLoading] = useState(false);
+  const ttsEnabled = propTtsEnabled !== undefined ? propTtsEnabled : localTtsEnabled;
 
   // 获取TTS状态
   const fetchTtsStatus = async () => {
     try {
       const response = await fetch(`${API_BASE_URL}/api/tts/status`);
       const data = await response.json();
-      setTtsEnabled(data.enabled);
+      setLocalTtsEnabled(data.enabled);
       setTtsApiKeyValid(data.api_key_valid);
       if (onToggle) {
         onToggle(data.enabled);
@@ -35,7 +36,7 @@ const TTSToggle = ({ onToggle }) => {
         body: JSON.stringify({ enabled }),
       });
       const data = await response.json();
-      setTtsEnabled(data.enabled);
+      setLocalTtsEnabled(data.enabled);
       console.log(data.message);
       if (onToggle) {
         onToggle(data.enabled);

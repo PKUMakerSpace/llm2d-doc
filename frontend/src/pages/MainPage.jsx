@@ -294,7 +294,10 @@ export default function MainPage() {
     formData.append('file', file);
     setLoading(true);
     try {
-      const response = await fetch(`${API_BASE_URL}/api/upload`, {
+      // 添加TTS开关状态到请求中
+      const queryParams = new URLSearchParams();
+      queryParams.append('frontend_tts_enabled', ttsEnabled);
+      const response = await fetch(`${API_BASE_URL}/api/upload?${queryParams}`, {
         method: 'POST',
         body: formData,
       });
@@ -401,6 +404,8 @@ export default function MainPage() {
         fileInputRef={fileInputRef}
         onFileUpload={handleUpload}
         disabled={loading}
+        ttsEnabled={ttsEnabled}
+        onTtsToggle={toggleTts}
       />
 
       <Sidebar 

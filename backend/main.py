@@ -42,7 +42,7 @@ app.add_middleware(
 class ChatRequest(BaseModel):
     message: str  # 用户消息内容
     session_id: Optional[str] = "default"  # 会话ID，默认为"default"
-    frontend_tts_enabled: Optional[bool] = False  # 前端TTS开关状态，默认为True
+    frontend_tts_enabled: Optional[bool] = True  # 前端TTS开关状态，默认为True
 
 # TTS开关请求模型
 class TTSRequest(BaseModel):
@@ -193,7 +193,7 @@ async def toggle_tts(request: TTSRequest):
     }
 
 @app.post("/api/upload")
-async def upload(file: UploadFile = File(...)):
+async def upload(file: UploadFile = File(...), frontend_tts_enabled: bool = True):
     # 保存临时文件
     # 获取上传文件的后缀名（如 .pdf, .docx）
     suffix = os.path.splitext(file.filename)[-1].lower()
@@ -253,8 +253,7 @@ async def upload(file: UploadFile = File(...)):
     # 为每个句子生成语音片段
     audio_segments = []
     # 只有当config中启用TTS且前端TTS开关也开启时，才生成语音
-    # 注意：upload接口没有前端TTS状态参数，暂时只检查config设置
-    if Config.is_tts_enabled():
+    if Config.is_tts_enabled() and frontend_tts_enabled:
         for sentence in sentences:
             # 生成当前句子的语音数据
             audio_data = tts_service.generate_audio(sentence)
@@ -273,8 +272,7 @@ async def upload(file: UploadFile = File(...)):
         # 否则为整个总结生成一个语音片段
         audio_data = None
         # 只有当config中启用TTS且前端TTS开关也开启时，才生成语音
-        # 注意：upload接口没有前端TTS状态参数，暂时只检查config设置
-        if Config.is_tts_enabled():
+        if Config.is_tts_enabled() and frontend_tts_enabled:
             audio_data = tts_service.generate_audio(reply)
         # 转为 base64 字符串
         audio_base64 = base64.b64encode(audio_data).decode('ascii') if audio_data else ''

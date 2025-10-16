@@ -31,5 +31,5 @@ class Config:
     
     @classmethod
     def is_tts_enabled(cls) -> bool:
-        # 只有当TTS_ENABLED为True且DASHSCOPE_API_KEY存在时才启用TTS
-        return bool(cls.TTS_ENABLED and cls.DASHSCOPE_API_KEY and cls.DASHSCOPE_API_KEY.strip())
+        # 只根据TTS_ENABLED配置决定是否启用TTS
+        return cls.TTS_ENABLED
