@@ -54,7 +54,7 @@ tts_service = TTSService(Config.DASHSCOPE_API_KEY, None)  # 初始化TTS服务�
 # 分句分段辅助函数
 def split_sentences(text):
     """
-    智能分句分段函数，根据文本长度和结构进行合理分割
+    智能分句分段函数，根据文本长度和结构进行合理分割，支持中英文标点
     
     Args:
         text (str): 待分割的文本
@@ -75,12 +75,13 @@ def split_sentences(text):
             result.append(para)
         else:
             # 对于较长的段落，先尝试按句号分割句子
-            # 注意保留分割符
+            # 增强分句逻辑，支持中英文标点符号
             sentences = []
             current = ""
             for char in para:
                 current += char
-                if char in ["。", "！", "？", "!", "?"]:
+                # 同时处理中英文的句号、感叹号、问号
+                if char in ["。", "！", "？", "!", "?", "."]:
                     sentences.append(current)
                     current = ""
             # 处理最后一个没有结束符的句子
@@ -90,13 +91,24 @@ def split_sentences(text):
             # 如果分割后的句子仍然很长（大于100字符），进行二次分割
             for sentence in sentences:
                 if len(sentence) > 100:
-                    # 在逗号、分号等位置进行二次分割
-                    sub_sentences = re.split(r'[,；;，]', sentence)
+                    # 增强二次分割逻辑，支持更多中英文标点符号
+                    # 分割符包括中英文逗号、分号、冒号等
+                    sub_sentences = re.split(r'[,，;；:\uff1a]', sentence)
                     sub_sentences = [s.strip() for s in sub_sentences if s.strip()]
+                    
                     # 为分割后的子句添加适当的标点
+                    # 根据原句判断是中文还是英文语境，使用相应的标点符号
                     for i, sub_sent in enumerate(sub_sentences):
                         if i < len(sub_sentences) - 1:
-                            result.append(sub_sent + "，")
+                            # 检查原句是否包含较多中文字符，决定使用中文还是英文标点
+                            # 计算中文字符比例
+                            chinese_chars = sum(1 for c in sentence if '\u4e00' <= c <= '\u9fff')
+                            if chinese_chars / len(sentence) > 0.3:
+                                # 中文语境为主，使用中文逗号
+                                result.append(sub_sent + "，")
+                            else:
+                                # 英文语境为主，使用英文逗号
+                                result.append(sub_sent + ",")
                         else:
                             result.append(sub_sent)
                 else:
@@ -225,6 +237,29 @@ async def upload(file: UploadFile = File(...), frontend_tts_enabled: bool = True
         # 其他类型文件，按 utf-8 解码为字符串
         text = content.decode("utf-8", errors="ignore")
 
+    # 创建保存文档的目录（如果不存在）
+    save_dir = os.path.join(os.path.dirname(__file__), 'save', 'doc')
+    os.makedirs(save_dir, exist_ok=True)
+    
+    # 保存处理的文本到txt文件
+    # 使用原始文件名（去除扩展名）作为txt文件名
+    base_filename = os.path.splitext(file.filename)[0]
+    txt_filename = f"{base_filename}.txt"
+    txt_path = os.path.join(save_dir, txt_filename)
+    
+    # 确保中文文件名能正确处理
+    try:
+        with open(txt_path, 'w', encoding='utf-8') as f:
+            f.write(text)
+    except UnicodeEncodeError:
+        # 如果文件名有问题，使用时间戳作为备用文件名
+        import time
+        timestamp = int(time.time())
+        fallback_filename = f"document_{timestamp}.txt"
+        fallback_path = os.path.join(save_dir, fallback_filename)
+        with open(fallback_path, 'w', encoding='utf-8') as f:
+            f.write(text)
+    
     # 删除临时文件，释放空间
     os.remove(tmp_path)
 
@@ -236,7 +271,7 @@ async def upload(file: UploadFile = File(...), frontend_tts_enabled: bool = True
         f"{character_setting}\n"
         "请用自然口语、完整段落、不要列表、不要星号、不要编号，像和朋友聊天一样总结以下文档内容。"
         "表达要富有情感和语气，适当使用强调和重音词汇，让听起来更像真人说话：\n"
-        f"{text[:4000]}"  # 只取前4000字符，防止内容过长
+        f"{text[:10000]}"  # 只取前4000字符，防止内容过长
     )
     # 调用 LLM 服务生成总结回复
     reply = await chat_service.llm_service.generate_response(prompt)
@@ -246,6 +281,10 @@ async def upload(file: UploadFile = File(...), frontend_tts_enabled: bool = True
         f"请总结上传的{suffix}文档内容", 
         reply
     )
+    
+    # 记录文档总结到日志文件，与chat对话一样
+    chat_service.main_agent._log_conversation('user', f"请总结上传的{suffix}文档内容")
+    chat_service.main_agent._log_conversation('assistant', reply)
 
     # Split reply into sentences
     sentences = split_sentences(reply)

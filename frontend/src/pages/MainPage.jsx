@@ -38,7 +38,7 @@ export default function MainPage() {
 
   // 拆分为句子数组
   const splitSentences = (text) => {
-    return text.split(/(?<=[。！？?!])/).filter(s => s.trim().length > 0);
+    return text.split(/(?<=[。！？?!.])/).filter(s => s.trim().length > 0);
   };
 
   // 解析可能包含在代码块中的JSON
