@@ -38,10 +38,15 @@ app.add_middleware(
     allow_headers=["*"],    #设置允许的HTTP请求头， * 表示允许所有请求头。
 )
 
-#请求数据模型
+# 请求数据模型
 class ChatRequest(BaseModel):
     message: str  # 用户消息内容
     session_id: Optional[str] = "default"  # 会话ID，默认为"default"
+    frontend_tts_enabled: Optional[bool] = False  # 前端TTS开关状态，默认为True
+
+# TTS开关请求模型
+class TTSRequest(BaseModel):
+    enabled: bool  # 是否启用TTS
 
 chat_service = ChatService()  # 初始化聊天服务
 tts_service = TTSService(Config.DASHSCOPE_API_KEY, None)  # 初始化TTS服务（通义不需要reference_id）
@@ -134,7 +139,8 @@ async def normal_chat_flow(request: ChatRequest):
     
     # 为每个句子生成语音片段
     audio_segments = []
-    if Config.is_tts_enabled():
+    # 只有当config中启用TTS且前端TTS开关也开启时，才生成语音
+    if Config.is_tts_enabled() and request.frontend_tts_enabled:
         for sentence in sentences:
             sentence_audio = tts_service.generate_audio(sentence)  # 生成语音数据
             if sentence_audio:
@@ -152,8 +158,11 @@ async def normal_chat_flow(request: ChatRequest):
             }
         )
     else:
-        # 否则为整体回复生成一个语音片段
-        audio_base64 = base64.b64encode(audio_data).decode('ascii') if audio_data else ''
+        # 否则为整体回复生成一个语音片段（只有当config中启用TTS且前端TTS开关也开启时，才保留语音）
+        if Config.is_tts_enabled() and request.frontend_tts_enabled:
+            audio_base64 = base64.b64encode(audio_data).decode('ascii') if audio_data else ''
+        else:
+            audio_base64 = ''  # 如果TTS关闭，返回空字符串
         return JSONResponse(
             content={
                 "message": reply,           # 回复文本
@@ -161,6 +170,27 @@ async def normal_chat_flow(request: ChatRequest):
                 "expression": expression    # 表情信息
             }
         )
+
+@app.get("/api/tts/status")
+async def get_tts_status():
+    """
+    获取当前TTS开关状态
+    """
+    return {
+        "enabled": Config.TTS_ENABLED,
+        "api_key_valid": bool(Config.DASHSCOPE_API_KEY and Config.DASHSCOPE_API_KEY.strip())
+    }
+
+@app.post("/api/tts/toggle")
+async def toggle_tts(request: TTSRequest):
+    """
+    切换TTS开关状态
+    """
+    Config.TTS_ENABLED = request.enabled
+    return {
+        "enabled": Config.TTS_ENABLED,
+        "message": "TTS服务已" + ("启用" if request.enabled else "禁用")
+    }
 
 @app.post("/api/upload")
 async def upload(file: UploadFile = File(...)):
@@ -222,6 +252,8 @@ async def upload(file: UploadFile = File(...)):
     
     # 为每个句子生成语音片段
     audio_segments = []
+    # 只有当config中启用TTS且前端TTS开关也开启时，才生成语音
+    # 注意：upload接口没有前端TTS状态参数，暂时只检查config设置
     if Config.is_tts_enabled():
         for sentence in sentences:
             # 生成当前句子的语音数据
@@ -240,6 +272,8 @@ async def upload(file: UploadFile = File(...)):
     else:
         # 否则为整个总结生成一个语音片段
         audio_data = None
+        # 只有当config中启用TTS且前端TTS开关也开启时，才生成语音
+        # 注意：upload接口没有前端TTS状态参数，暂时只检查config设置
         if Config.is_tts_enabled():
             audio_data = tts_service.generate_audio(reply)
         # 转为 base64 字符串

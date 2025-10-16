@@ -1,4 +1,60 @@
 /* App.css */
+/* 重置默认样式 */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+/* TTS开关样式 */
+.tts-toggle-container {
+  margin: 10px 0;
+}
+
+.tts-toggle-label {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.tts-status-text {
+  font-size: 14px;
+  color: #333;
+}
+
+.tts-status-text.warning {
+  color: #ff6b6b;
+}
+
+.tts-toggle-btn {
+  padding: 8px 16px;
+  border: none;
+  border-radius: 20px;
+  cursor: pointer;
+  font-size: 14px;
+  transition: all 0.3s ease;
+}
+
+.tts-toggle-btn.enabled {
+  background-color: #4caf50;
+  color: white;
+}
+
+.tts-toggle-btn.disabled {
+  background-color: #ccc;
+  color: #666;
+}
+
+.tts-toggle-btn:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.tts-toggle-btn.api-key-invalid {
+  background-color: #ff6b6b;
+  color: white;
+  cursor: not-allowed;
+}
 
 /* 主应用容器 */
 .app {

@@ -19,10 +19,10 @@ class TTSService:
             try:
                 # 调用通义千问TTS服务
                 response = dashscope.MultiModalConversation.call(
-                    model="qwen3-tts-flash",
+                    model="qwen-tts",
                     api_key=self.api_key if self.api_key else os.getenv("DASHSCOPE_API_KEY"),
                     text=text,
-                    voice="Cherry",
+                    voice="Chelsie",
                     language_type="Chinese", # 建议与文本语种一致
                     stream=False
                 )

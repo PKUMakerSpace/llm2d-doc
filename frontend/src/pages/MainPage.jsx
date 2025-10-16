@@ -4,6 +4,7 @@ import Live2DController from '../components/Live2D/Live2DController';
 import MessageList from '../components/Chat/MessageList';
 import InputArea from '../components/Chat/InputArea';
 import Sidebar from '../components/Sidebar';
+import TTSToggle from '../components/TTSToggle';
 import '../App.css';
 import LoadingDots from '../components/LoadingDots';
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000';
@@ -16,9 +17,24 @@ export default function MainPage() {
   const fileInputRef = useRef();
   const [subtitleSentences, setSubtitleSentences] = useState([]);
   const [subtitleIndex, setSubtitleIndex] = useState(0);
+  const [ttsEnabled, setTtsEnabled] = useState(true);
+  const [ttsApiKeyValid, setTtsApiKeyValid] = useState(false);
   
   // Live2D 控制器 ref
   const live2dControllerRef = useRef(null);
+
+  // 获取 TTS 状态
+  const getTtsStatus = () => {
+    return {
+      enabled: ttsEnabled,
+      apiKeyValid: ttsApiKeyValid
+    };
+  };
+
+  // 切换 TTS 启用状态
+  const toggleTts = () => {
+    setTtsEnabled(prev => !prev);
+  };
 
   // 拆分为句子数组
   const splitSentences = (text) => {
@@ -195,7 +211,8 @@ export default function MainPage() {
         },
         body: JSON.stringify({ 
           message: message,
-          session_id: 'default' 
+          session_id: 'default',
+          frontend_tts_enabled: ttsEnabled
         }),
       });
       

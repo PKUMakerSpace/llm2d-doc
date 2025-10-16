@@ -1,6 +1,7 @@
-  // frontend/src/components/Chat/InputArea.jsx
+// frontend/src/components/Chat/InputArea.jsx
   import '../../App.css';
-  import PropTypes from 'prop-types'; // 引入 PropTypes
+import PropTypes from 'prop-types'; // 引入 PropTypes
+import TTSToggle from '../TTSToggle';
   
   const InputArea = ({ 
     input, 
@@ -58,6 +59,9 @@
         >
           发送
         </button>
+        
+        {/* TTS开关 */}
+        <TTSToggle />
       </div>
     );
   };
