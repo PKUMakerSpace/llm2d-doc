@@ -69,12 +69,7 @@ graph TD
     G --> H["LLMService.generate_response(prompt)<br/>[llm.py]"]
     H --> I["返回AI回复<br/>[main.py]"]
 
-    style D fill:#e1f5fe
-    style E fill:#f3e5f5
-    style F fill:#e8f5e8
-    style G fill:#e8f5e8
-    style H fill:#fff3e0
-    style I fill:#e1f5fe
+
 ```
 
 文档上传与总结架构
@@ -133,7 +128,7 @@ graph TD
     N --> Q
 ```
 
-组建交互逻辑图
+组件交互逻辑图
 ```
 +------------------+     +-------------------+     +----------------+
 |                  |     |                   |     |                |

@@ -30,28 +30,76 @@ import PyPDF2
 
 app = FastAPI()
 
-# CORS设置
+# CORS设置，使前端应用（可能部署在与后端不同的域名或端口上）能够正常访问后端API，避免浏览器的同源策略限制。在当前项目中，由于使用了前后端分离架构（有单独的frontend目录），所以需要进行这样的CORS设置来确保前端可以顺利调用后端提供的各种API接口，如聊天接口(/api/chat)和文档上传接口(/api/upload)等。
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
-    allow_methods=["*"],
-    allow_headers=["*"],
+    allow_origins=["*"],    #设置允许访问后端API的源（域名），这里使用通配符 * 表示允许所有域名的请求
+    allow_methods=["*"],    #设置允许的HTTP方法，包括GET、POST、PUT、DELETE等， * 表示允许所有方法
+    allow_headers=["*"],    #设置允许的HTTP请求头， * 表示允许所有请求头。
 )
 
+#请求数据模型
 class ChatRequest(BaseModel):
     message: str  # 用户消息内容
     session_id: Optional[str] = "default"  # 会话ID，默认为"default"
 
 chat_service = ChatService()  # 初始化聊天服务
-tts_service = TTSService(Config.FISH_API_KEY, Config.FISH_REFERENCE_ID)  # 初始化TTS服务
+tts_service = TTSService(Config.DASHSCOPE_API_KEY, None)  # 初始化TTS服务（通义不需要reference_id）
 
-# 分句辅助函数
+# 分句分段辅助函数
 def split_sentences(text):
-    # 按常见句末标点分割文本
-    sentences = re.split(r'[。！？\?!]', text)
-    # 过滤空句并去除首尾空格
-    sentences = [s.strip() for s in sentences if s.strip()]
-    return sentences
+    """
+    智能分句分段函数，根据文本长度和结构进行合理分割
+    
+    Args:
+        text (str): 待分割的文本
+        
+    Returns:
+        list: 分割后的句子列表
+    """
+    # 先按段落分割（基于换行符）
+    paragraphs = re.split(r'\n+', text)
+    paragraphs = [p.strip() for p in paragraphs if p.strip()]
+    
+    result = []
+    
+    # 针对每个段落进行处理
+    for para in paragraphs:
+        # 如果段落很短（小于50字符），直接作为一个整体保留
+        if len(para) < 50:
+            result.append(para)
+        else:
+            # 对于较长的段落，先尝试按句号分割句子
+            # 注意保留分割符
+            sentences = []
+            current = ""
+            for char in para:
+                current += char
+                if char in ["。", "！", "？", "!", "?"]:
+                    sentences.append(current)
+                    current = ""
+            # 处理最后一个没有结束符的句子
+            if current.strip():
+                sentences.append(current)
+            
+            # 如果分割后的句子仍然很长（大于100字符），进行二次分割
+            for sentence in sentences:
+                if len(sentence) > 100:
+                    # 在逗号、分号等位置进行二次分割
+                    sub_sentences = re.split(r'[,；;，]', sentence)
+                    sub_sentences = [s.strip() for s in sub_sentences if s.strip()]
+                    # 为分割后的子句添加适当的标点
+                    for i, sub_sent in enumerate(sub_sentences):
+                        if i < len(sub_sentences) - 1:
+                            result.append(sub_sent + "，")
+                        else:
+                            result.append(sub_sent)
+                else:
+                    result.append(sentence)
+    
+    # 最终清理空句子
+    result = [s.strip() for s in result if s.strip()]
+    return result
 
 @app.post("/api/chat")
 async def chat(request: ChatRequest):

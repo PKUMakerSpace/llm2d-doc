@@ -10,7 +10,7 @@ if [ ! -d "frontend" ] || [ ! -d "backend" ]; then
 fi
 
 # 设置默认API地址，可通过环境变量覆盖，需要换成自己的服务器地址
-API_BASE_URL=${API_BASE_URL:-"http://162.105.13.179:8001"}
+API_BASE_URL=${API_BASE_URL:-"http://10.129.243.43:8001"}
 
 # 构建前端
 echo "正在构建前端应用，向后端请求的API地址是: $API_BASE_URL"

@@ -1,4 +1,6 @@
-from fish_audio_sdk import Session, TTSRequest
+import os
+import requests
+import dashscope
 from typing import Optional
 import time
 
@@ -6,7 +8,8 @@ class TTSService:
     def __init__(self, api_key: str, reference_id: str):
         self.api_key = api_key
         self.reference_id = reference_id
-        self.session = Session(api_key)
+        # 设置API密钥到环境变量或dashscope配置
+        dashscope.api_key = api_key if api_key else os.getenv("DASHSCOPE_API_KEY")
     
     def generate_audio(self, text: str) -> bytes:
         max_retries = 3
@@ -14,11 +17,25 @@ class TTSService:
         
         for attempt in range(max_retries):
             try:
-                audio_data = b"".join(self.session.tts(TTSRequest(
-                    reference_id=self.reference_id,
-                    text=text
-                )))
-                return audio_data
+                # 调用通义千问TTS服务
+                response = dashscope.MultiModalConversation.call(
+                    model="qwen3-tts-flash",
+                    api_key=self.api_key if self.api_key else os.getenv("DASHSCOPE_API_KEY"),
+                    text=text,
+                    voice="Cherry",
+                    language_type="Chinese", # 建议与文本语种一致
+                    stream=False
+                )
+                
+                # 获取音频URL并下载
+                audio_url = response.output.audio.url
+                
+                # 下载音频数据
+                response = requests.get(audio_url)
+                response.raise_for_status()  # 检查请求是否成功
+                
+                return response.content  # 返回音频二进制数据
+                
             except Exception as e:
                 if attempt < max_retries - 1:  # 如果不是最后一次尝试
                     print(f"TTS Error on attempt {attempt + 1}: {str(e)}")
